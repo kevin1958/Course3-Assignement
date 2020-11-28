@@ -1,0 +1,32 @@
+features<- read.table("UCI HAR Dataset/features.txt",col.names = c("n","functions"))
+activity<- read.table("UCI HAR Dataset/activity_labels.txt",col.names = c("code","activity"))
+subject_test<- read.table("UCI HAR Dataset/test/subject_test.txt", col.names="subject")
+x_test<- read.table("UCI HAR Dataset/test/X_test.txt", col.names=features$functions)
+y_test<- read.table("UCI HAR Dataset/test/y_test.txt", col.names="code")
+subject_train<- read.table("UCI HAR Dataset/train/subject_train.txt", col.names="subject")
+x_train<- read.table("UCI HAR Dataset/train/X_train.txt", col.names=features$functions)
+y_train<- read.table("UCI HAR Dataset/train/y_train.txt", col.names="code")
+X=rbind(x_test,x_train)
+Y=rbind(y_test,y_train)
+subject<- rbind(subject_test,subject_train)
+merge_data<- cbind(X,Y,subject)
+measure<- merge_data %>% select(subject,code,contains("mean"),contains("std"))
+measure$code<- activity[measure$code,2]
+names(measure)[2] = "activity"
+names(measure)<-gsub("Acc", "Accelerometer", names(measure))
+names(measure)<-gsub("Gyro", "Gyroscope", names(measure))
+names(measure)<-gsub("BodyBody", "Body", names(measure))
+names(measure)<-gsub("Mag", "Magnitude", names(measure))
+names(measure)<-gsub("^t", "Time", names(measure))
+names(measure)<-gsub("^f", "Frequency", names(measure))
+names(measure)<-gsub("tBody", "TimeBody", names(measure))
+names(measure)<-gsub("-mean()", "Mean", names(measure), ignore.case = TRUE)
+names(measure)<-gsub("-std()", "STD", names(measure), ignore.case = TRUE)
+names(measure)<-gsub("-freq()", "Frequency", names(measure), ignore.case = TRUE)
+names(measure)<-gsub("angle", "Angle", names(measure))
+names(measure)<-gsub("gravity", "Gravity", names(measure))
+FinalData <- measure %>%
+  group_by(subject, activity) %>%
+  summarise_all(funs(mean))
+write.table(FinalData, "FinalData.txt", row.name=FALSE)
+
